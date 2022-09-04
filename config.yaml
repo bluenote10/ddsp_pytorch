@@ -1,6 +1,6 @@
 data:
-  data_location: /slow-2/georges/dataset-urmp-wav
-  extension: "wav"
+  data_location: /home/fabian/Dropbox/Temp/ReferenceAudio/Landola/Snapshot1/
+  filter: "recording_normalized.mp3"
 
 preprocess:
   sampling_rate: &samplingrate 16000
@@ -8,11 +8,11 @@ preprocess:
   block_size: &blocksize 160 # must be a power of 2 if using realtime
 
   oneshot: false # crop every audio file to exactly signal length
-  out_dir: ./preprocessed/
+  out_dir: /tmp/ddsp_preprocessed/
 
 model:
   hidden_size: 512
-  n_harmonic: 100
+  n_harmonic: 80
   n_bands: 65
   sampling_rate: *samplingrate
   block_size: *blocksize

@@ -1,0 +1,7 @@
+[project]
+name = "ddsp_pytorch"
+version = "0.0.1"
+
+dependencies = [
+    "SomeLibrary ~= 2.2",
+]

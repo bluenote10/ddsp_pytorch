@@ -4,3 +4,5 @@
 *__pycache__*
 export/*
 preprocessed/*
+ddsp_pytorch.egg-info/
+dist/

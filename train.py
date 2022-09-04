@@ -1,22 +1,25 @@
-import torch
-from torch.utils.tensorboard import SummaryWriter
-import yaml
-from ddsp.model import DDSP
-from effortless_config import Config
 from os import path
-from preprocess import Dataset
-from tqdm import tqdm
-from ddsp.core import multiscale_fft, safe_log, mean_std_loudness
-import soundfile as sf
-from einops import rearrange
-from ddsp.utils import get_scheduler
+
 import numpy as np
+import soundfile as sf
+import torch
+import yaml
+from effortless_config import Config
+from einops import rearrange
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+
+from ddsp.core import mean_std_loudness, multiscale_fft, safe_log
+from ddsp.model import DDSP
+from ddsp.utils import get_scheduler
+from preprocess import Dataset
 
 
 class args(Config):
     CONFIG = "config.yaml"
     NAME = "debug"
     ROOT = "runs"
+    DATA_DIR = "data_dir"
     STEPS = 500000
     BATCH = 16
     START_LR = 1e-3
@@ -33,7 +36,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = DDSP(**config["model"]).to(device)
 
-dataset = Dataset(config["preprocess"]["out_dir"])
+# dataset = Dataset(config["preprocess"]["out_dir"])
+dataset = Dataset(args.DATA_DIR)
 
 dataloader = torch.utils.data.DataLoader(
     dataset,
