@@ -1,10 +1,12 @@
 #%%
 import torch
+
 torch.set_grad_enabled(False)
-from time import time
 import math
-from tqdm import tqdm
+from time import time
+
 from effortless_config import Config
+from tqdm import tqdm
 
 
 class args(Config):
@@ -18,7 +20,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = torch.jit.load(args.MODEL).eval().to(device)
 sr = model.ddsp.sampling_rate
 
-N = 2**(math.ceil(math.log2(sr)))
+N = 2 ** (math.ceil(math.log2(sr)))
 x = torch.randn(1, N, 1).to(device)
 
 n_run = args.N_RUN

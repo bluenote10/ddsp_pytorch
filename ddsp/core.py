@@ -1,10 +1,11 @@
-import torch
-import torch.nn as nn
-import torch.fft as fft
-import numpy as np
-import librosa as li
-import crepe
 import math
+
+import crepe
+import librosa as li
+import numpy as np
+import torch
+import torch.fft as fft
+import torch.nn as nn
 
 
 def safe_log(x):
@@ -74,7 +75,7 @@ def remove_above_nyquist(amplitudes, pitch, sampling_rate):
 
 
 def scale_function(x):
-    return 2 * torch.sigmoid(x)**(math.log(10)) + 1e-7
+    return 2 * torch.sigmoid(x) ** (math.log(10)) + 1e-7
 
 
 def extract_loudness(signal, sampling_rate, block_size, n_fft=2048):
@@ -163,6 +164,6 @@ def fft_convolve(signal, kernel):
     kernel = nn.functional.pad(kernel, (kernel.shape[-1], 0))
 
     output = fft.irfft(fft.rfft(signal) * fft.rfft(kernel))
-    output = output[..., output.shape[-1] // 2:]
+    output = output[..., output.shape[-1] // 2 :]
 
     return output

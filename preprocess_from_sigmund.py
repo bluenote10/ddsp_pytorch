@@ -1,10 +1,12 @@
-import yaml
-from scipy.io import wavfile
-import numpy as np
-from effortless_config import Config
+from os import makedirs, path
 from types import SimpleNamespace
+
+import numpy as np
+import yaml
+from effortless_config import Config
 from einops import rearrange
-from os import path, makedirs
+from scipy.io import wavfile
+
 from ddsp.core import extract_pitch
 
 with open("config.yaml", "r") as config:
@@ -35,10 +37,10 @@ np.save(path.join(out_dir, "signals.npy"), x[0])
 
 np.save(
     path.join(out_dir, "pitchs.npy"),
-    x[1, :, ::config.preprocess["block_size"]],
+    x[1, :, :: config.preprocess["block_size"]],
 )
 
 np.save(
     path.join(out_dir, "loudness.npy"),
-    x[2, :, ::config.preprocess["block_size"]],
+    x[2, :, :: config.preprocess["block_size"]],
 )

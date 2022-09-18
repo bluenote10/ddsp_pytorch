@@ -1,9 +1,11 @@
+import math
+
 import torch
 import torch.nn as nn
-from .core import mlp, gru, scale_function, remove_above_nyquist, upsample
-from .core import harmonic_synth, amp_to_impulse_response, fft_convolve
-from .core import resample
-import math
+
+from .core import (amp_to_impulse_response, fft_convolve, gru, harmonic_synth,
+                   mlp, remove_above_nyquist, resample, scale_function,
+                   upsample)
 
 
 class Reverb(nn.Module):
@@ -38,8 +40,7 @@ class Reverb(nn.Module):
 
 
 class DDSP(nn.Module):
-    def __init__(self, hidden_size, n_harmonic, n_bands, sampling_rate,
-                 block_size):
+    def __init__(self, hidden_size, n_harmonic, n_bands, sampling_rate, block_size):
         super().__init__()
         self.register_buffer("sampling_rate", torch.tensor(sampling_rate))
         self.register_buffer("block_size", torch.tensor(block_size))
@@ -48,10 +49,12 @@ class DDSP(nn.Module):
         self.gru = gru(2, hidden_size)
         self.out_mlp = mlp(hidden_size + 2, hidden_size, 3)
 
-        self.proj_matrices = nn.ModuleList([
-            nn.Linear(hidden_size, n_harmonic + 1),
-            nn.Linear(hidden_size, n_bands),
-        ])
+        self.proj_matrices = nn.ModuleList(
+            [
+                nn.Linear(hidden_size, n_harmonic + 1),
+                nn.Linear(hidden_size, n_bands),
+            ]
+        )
 
         self.reverb = Reverb(sampling_rate, sampling_rate)
 
@@ -59,10 +62,13 @@ class DDSP(nn.Module):
         self.register_buffer("phase", torch.zeros(1))
 
     def forward(self, pitch, loudness):
-        hidden = torch.cat([
-            self.in_mlps[0](pitch),
-            self.in_mlps[1](loudness),
-        ], -1)
+        hidden = torch.cat(
+            [
+                self.in_mlps[0](pitch),
+                self.in_mlps[1](loudness),
+            ],
+            -1,
+        )
         hidden = torch.cat([self.gru(hidden)[0], pitch, loudness], -1)
         hidden = self.out_mlp(hidden)
 
@@ -89,27 +95,34 @@ class DDSP(nn.Module):
         param = scale_function(self.proj_matrices[1](hidden) - 5)
 
         impulse = amp_to_impulse_response(param, self.block_size)
-        noise = torch.rand(
-            impulse.shape[0],
-            impulse.shape[1],
-            self.block_size,
-        ).to(impulse) * 2 - 1
+        noise = (
+            torch.rand(
+                impulse.shape[0],
+                impulse.shape[1],
+                self.block_size,
+            ).to(impulse)
+            * 2
+            - 1
+        )
 
         noise = fft_convolve(noise, impulse).contiguous()
         noise = noise.reshape(noise.shape[0], -1, 1)
 
         signal = harmonic + noise
 
-        #reverb part
+        # reverb part
         signal = self.reverb(signal)
 
         return signal
 
     def realtime_forward(self, pitch, loudness):
-        hidden = torch.cat([
-            self.in_mlps[0](pitch),
-            self.in_mlps[1](loudness),
-        ], -1)
+        hidden = torch.cat(
+            [
+                self.in_mlps[0](pitch),
+                self.in_mlps[1](loudness),
+            ],
+            -1,
+        )
 
         gru_out, cache = self.gru(hidden, self.cache_gru)
         self.cache_gru.copy_(cache)
@@ -148,11 +161,15 @@ class DDSP(nn.Module):
         param = scale_function(self.proj_matrices[1](hidden) - 5)
 
         impulse = amp_to_impulse_response(param, self.block_size)
-        noise = torch.rand(
-            impulse.shape[0],
-            impulse.shape[1],
-            self.block_size,
-        ).to(impulse) * 2 - 1
+        noise = (
+            torch.rand(
+                impulse.shape[0],
+                impulse.shape[1],
+                self.block_size,
+            ).to(impulse)
+            * 2
+            - 1
+        )
 
         noise = fft_convolve(noise, impulse).contiguous()
         noise = noise.reshape(noise.shape[0], -1, 1)

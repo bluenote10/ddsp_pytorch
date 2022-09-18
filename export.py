@@ -1,9 +1,11 @@
+from os import makedirs, path, system
+
+import soundfile as sf
 import torch
 import yaml
 from effortless_config import Config
-from os import path, makedirs, system
+
 from ddsp.model import DDSP
-import soundfile as sf
 from preprocess import get_files
 
 torch.set_grad_enabled(False)
@@ -33,8 +35,8 @@ class ScriptDDSP(torch.nn.Module):
     def forward(self, pitch, loudness):
         loudness = (loudness - self.mean_loudness) / self.std_loudness
         if self.realtime:
-            pitch = pitch[:, ::self.ddsp.block_size]
-            loudness = loudness[:, ::self.ddsp.block_size]
+            pitch = pitch[:, :: self.ddsp.block_size]
+            loudness = loudness[:, :: self.ddsp.block_size]
             return self.ddsp.realtime_forward(pitch, loudness)
         else:
             return self.ddsp(pitch, loudness)
@@ -58,7 +60,8 @@ scripted_model = torch.jit.script(
         config["data"]["mean_loudness"],
         config["data"]["std_loudness"],
         args.REALTIME,
-    ))
+    )
+)
 torch.jit.save(
     scripted_model,
     path.join(args.OUT_DIR, f"ddsp_{name}_pretrained.ts"),
@@ -72,8 +75,8 @@ sf.write(
 )
 
 with open(
-        path.join(args.OUT_DIR, f"ddsp_{name}_config.yaml"),
-        "w",
+    path.join(args.OUT_DIR, f"ddsp_{name}_config.yaml"),
+    "w",
 ) as config_out:
     yaml.safe_dump(config, config_out)
 
