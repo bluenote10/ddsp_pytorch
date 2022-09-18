@@ -1,5 +1,6 @@
 from os import makedirs, path
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import yaml
@@ -9,8 +10,8 @@ from scipy.io import wavfile
 
 from ddsp.core import extract_pitch
 
-with open("config.yaml", "r") as config:
-    config = SimpleNamespace(**yaml.safe_load(config))
+with open("config.yaml", "r") as f:
+    config = SimpleNamespace(**yaml.safe_load(f))
 
 sr, x = wavfile.read(config.data["data_location"])
 assert sr == config.preprocess["sampling_rate"]

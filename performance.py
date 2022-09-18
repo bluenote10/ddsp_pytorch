@@ -24,7 +24,7 @@ N = 2 ** (math.ceil(math.log2(sr)))
 x = torch.randn(1, N, 1).to(device)
 
 n_run = args.N_RUN
-mean = 0
+mean = 0.0
 nel = 0
 
 for i in tqdm(range(n_run), desc="testing..."):

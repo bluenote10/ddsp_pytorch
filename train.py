@@ -1,4 +1,5 @@
 from os import path
+from typing import Any
 
 import numpy as np
 import soundfile as sf
@@ -29,8 +30,8 @@ class args(Config):
 
 args.parse_args()
 
-with open(args.CONFIG, "r") as config:
-    config = yaml.safe_load(config)
+with open(args.CONFIG, "r") as f:
+    config: Any = yaml.safe_load(f)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
