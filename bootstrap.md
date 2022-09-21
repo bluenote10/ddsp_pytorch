@@ -22,6 +22,9 @@ drive.mount('/content/drive')
 ```
 
 ```py
-!mkdir -p /content/drive/MyDrive/colab/ddsp_pytorch/output
-!python train.py --data-dir /content/drive/MyDrive/colab/ddsp_pytorch/input/ddsp_preprocessed --root /content/drive/MyDrive/colab/ddsp_pytorch/output
+!export DATA_DIR=/content/drive/MyDrive/colab/ddsp_pytorch/input/ddsp_preprocessed
+!export TRAIN_DIR=/content/drive/MyDrive/colab/ddsp_pytorch/output
+
+!mkdir -p $TRAIN_DIR
+!python train.py
 ```

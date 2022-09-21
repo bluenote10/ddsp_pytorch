@@ -33,13 +33,13 @@ def get_run_dir(name_suffix: Optional[str]) -> Path:
     train_dir = io.get_train_dir()
     sub_dir = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     if name_suffix is not None:
-        sub_dir += name_suffix
+        sub_dir += "_" + name_suffix
     return train_dir / sub_dir
 
 
 def train(
     config_name: str = "config.yaml",
-    name_suffix: str = "debug",
+    name_suffix: Optional[str] = None,
     steps: int = 500000,
     batch_size: int = 16,
     start_lr: float = 1e-3,
