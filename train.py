@@ -1,5 +1,7 @@
+import datetime
 from os import path
-from typing import Any
+from pathlib import Path
+from typing import Any, Optional
 
 import numpy as np
 import soundfile as sf
@@ -10,17 +12,34 @@ from einops import rearrange
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+from ddsp import io
 from ddsp.core import mean_std_loudness, multiscale_fft, safe_log
 from ddsp.model import DDSP
 from ddsp.utils import get_scheduler
 from preprocess import Dataset
 
+"""
+export TRAIN_DIR=$(pwd)/runs
+export DATA_DIR=${HOME}/gdrive/colab/ddsp_pytorch/input/ddsp_preprocessed
+
+tensorboard --logdir $TRAIN_DIR
+
+python train.py
+
+"""
+
+
+def get_run_dir(name_suffix: Optional[str]) -> Path:
+    train_dir = io.get_train_dir()
+    sub_dir = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    if name_suffix is not None:
+        sub_dir += name_suffix
+    return train_dir / sub_dir
+
 
 def train(
     config_name: str = "config.yaml",
-    name: str = "debug",
-    root: str = "runs",
-    data_dir: str = "data_dir",
+    name_suffix: str = "debug",
     steps: int = 500000,
     batch_size: int = 16,
     start_lr: float = 1e-3,
@@ -36,8 +55,7 @@ def train(
 
     model = DDSP(**config["model"]).to(device)
 
-    # dataset = Dataset(config["preprocess"]["out_dir"])
-    dataset = Dataset(data_dir)
+    dataset = Dataset(io.get_data_dir())
 
     dataloader = torch.utils.data.DataLoader(
         dataset,
@@ -50,9 +68,11 @@ def train(
     config["data"]["mean_loudness"] = mean_loudness
     config["data"]["std_loudness"] = std_loudness
 
-    writer = SummaryWriter(path.join(root, name), flush_secs=20)
+    run_dir = get_run_dir(name_suffix)
 
-    with open(path.join(root, name, "config.yaml"), "w") as out_config:
+    writer = SummaryWriter(run_dir, flush_secs=20)
+
+    with open(run_dir / "config.yaml", "w") as out_config:
         yaml.safe_dump(config, out_config)
 
     opt = torch.optim.Adam(model.parameters(), lr=start_lr)
@@ -68,6 +88,7 @@ def train(
 
     scales = config["train"]["scales"]
     overlap = config["train"]["overlap"]
+    sample_rate = config["preprocess"]["sampling_rate"]
 
     best_loss = float("inf")
     mean_loss = 0.0
@@ -76,7 +97,7 @@ def train(
     epochs = int(np.ceil(steps / len(dataloader)))
 
     for e in tqdm(range(epochs)):
-        print(f"epoch: {e+1}")
+        # print(f"epoch: {e+1}")
 
         for s, p, l in dataloader:
             s = s.to(device)
@@ -107,18 +128,30 @@ def train(
             n_element += 1
             mean_loss += (loss.item() - mean_loss) / n_element
 
-            print(f"mean_loss = {mean_loss}")
+            # print(f"mean_loss = {mean_loss}")
 
         if e % 10 == 0:
+            print(f"epoch = {e}    mean_loss = {mean_loss}")
+
+            writer.add_scalar("mean_loss", mean_loss, e)
             writer.add_scalar("lr", schedule(e), e)
             writer.add_scalar("reverb_decay", model.reverb.decay.item(), e)
             writer.add_scalar("reverb_wet", model.reverb.wet.item(), e)
             # scheduler.step()
+
             if mean_loss < best_loss:
                 best_loss = mean_loss
-                torch.save(
-                    model.state_dict(),
-                    path.join(root, name, "state.pth"),
+                torch.save(model.state_dict(), run_dir / "state.pth")
+
+                (run_dir / "stats.yaml").write_text(
+                    yaml.dump(
+                        {
+                            "epoch": e,
+                            "step": step,
+                            "mean_loss": mean_loss,
+                            "best_loss": best_loss,
+                        }
+                    )
                 )
 
             mean_loss = 0
@@ -126,11 +159,8 @@ def train(
 
             audio = torch.cat([s, y], -1).reshape(-1).detach().cpu().numpy()
 
-            sf.write(
-                path.join(root, name, f"eval_{e:06d}.wav"),
-                audio,
-                config["preprocess"]["sampling_rate"],
-            )
+            sf.write(run_dir / f"eval.wav", audio, sample_rate)
+            # sf.write(run_dir / f"eval_{e:06d}.wav", audio, sample_rate)
 
 
 def main() -> None:
