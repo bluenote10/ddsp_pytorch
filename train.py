@@ -19,13 +19,9 @@ from ddsp.utils import get_scheduler
 from preprocess import Dataset
 
 """
-export TRAIN_DIR=$(pwd)/runs
-export DATA_DIR=${HOME}/gdrive/colab/ddsp_pytorch/input/ddsp_preprocessed
-
 tensorboard --logdir $TRAIN_DIR
 
 python train.py
-
 """
 
 

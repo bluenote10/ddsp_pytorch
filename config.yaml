@@ -1,14 +1,8 @@
-data:
-  data_location: /home/fabian/Dropbox/Temp/ReferenceAudio/Landola/Snapshot1/
-  filter: "recording_normalized.mp3"
-
 preprocess:
   sampling_rate: &samplingrate 16000
   signal_length: &signallength 64000
   block_size: &blocksize 128 # must be a power of 2 if using realtime
-
   oneshot: false # crop every audio file to exactly signal length
-  out_dir: /tmp/ddsp_preprocessed/
 
 model:
   hidden_size: 512
